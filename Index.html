@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Your Lucky Number Today!</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      background: linear-gradient(to bottom right, #fceabb, #f8b500);
+      margin: 0;
+      padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+      color: #444;
+      margin-bottom: 2rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    #number {
+      font-size: 4rem;
+      color: #222;
+      margin: 2rem 0;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out, transform 0.5s;
+      transform: scale(0.8);
+      position: relative;
+      z-index: 2;
+    }
+
+    #number.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    button {
+      padding: 14px 28px;
+      font-size: 1rem;
+      background-color: #ff6f61;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s ease, transform 0.2s;
+      position: relative;
+      z-index: 2;
+    }
+
+    button:hover {
+      background-color: #e85d4f;
+      transform: scale(1.05);
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      #number {
+        font-size: 3rem;
+      }
+
+      button {
+        font-size: 0.9rem;
+        padding: 12px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Your Lucky Number Today!</h1>
+  <h2>您的幸运数字</h2>
+  <div id="number">0000</div>
+  <button onclick="generateNumber()">Another Number</button>
+  <canvas id="fireworks"></canvas>
+
+  <script>
+    function generateNumber() {
+      const numberEl = document.getElementById("number");
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      numberEl.classList.remove("show");
+      void numberEl.offsetWidth;
+      numberEl.innerText = randomNum;
+      numberEl.classList.add("show");
+
+      burstConfetti();
+    }
+
+    window.onload = generateNumber;
+
+    // Canvas & Resizing
+    const canvas = document.getElementById('fireworks');
+    const ctx = canvas.getContext('2d');
+    let fireworks = [], confetti = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Firework Particle
+    class Firework {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height / 2;
+        this.radius = Math.random() * 2 + 1.5;
+        this.color = `hsl(${Math.random() * 360}, 80%, 60%)`;
+        this.alpha = 1;
+        this.dx = Math.random() * 2 - 1;
+        this.dy = Math.random() * 2 - 1;
+      }
+      update() {
+        this.x += this.dx;
+        this.y += this.dy;
+        this.alpha -= 0.005;
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.alpha;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // Confetti Particle
+    class Confetto {
+      constructor() {
+        this.x = canvas.width / 2;
+        this.y = canvas.height / 2;
+        this.size = Math.random() * 8 + 6;
+        this.color = `hsl(${Math.random() * 360}, 100%, 75%)`;
+        this.angle = Math.random() * 2 * Math.PI;
+        this.speed = Math.random() * 3 + 1;
+        this.gravity = 0.1;
+        this.alpha = 1;
+      }
+      update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed + this.gravity;
+        this.alpha -= 0.008; // Slower fade
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.rect(this.x, this.y, this.size, this.size);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.alpha;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function burstConfetti() {
+      for (let i = 0; i < 80; i++) {
+        confetti.push(new Confetto());
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Increased Fireworks Volume
+      if (Math.random() < 0.2) {
+        for (let i = 0; i < 4; i++) {
+          fireworks.push(new Firework());
+        }
+      }
+
+      fireworks.forEach((f, i) => {
+        f.update();
+        f.draw();
+        if (f.alpha <= 0) fireworks.splice(i, 1);
+      });
+
+      confetti.forEach((c, i) => {
+        c.update();
+        c.draw();
+        if (c.alpha <= 0) confetti.splice(i, 1);
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+
+</body>
+</html>
